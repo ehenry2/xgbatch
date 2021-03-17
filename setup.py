@@ -4,7 +4,7 @@ import setuptools
 setuptools.setup(
     name="xgbatch",
     version="0.0.1",
-    author="E. Henry",
+    author="Eric Henry",
     description="High Performance Serving for XGBoost",
     url="https://github.com/ehenry2/xgbatch",
     packages=setuptools.find_packages(),
@@ -18,4 +18,5 @@ setuptools.setup(
         "xgboost>=1.0.0",
         "numpy>=1.0.0",
     ],
+    python_requires=">=3.6",
 )
