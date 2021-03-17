@@ -18,7 +18,6 @@ amount of parallelism/resources at it. To summarize, real time use cases need
 low latency, while batch processes need to take advantage of vectorization
 to process through large volumes of data quickly. Enter XGBatch.
 
-
 ## How does it work?
 XGBATCH uses Apache Arrow's Flight framework (which uses GRPC under the hood)
 to stream batches of data to the scoring service, which it then scores as a batch
