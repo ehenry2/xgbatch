@@ -7,7 +7,7 @@ setuptools.setup(
     author="Eric Henry",
     description="High Performance Serving for XGBoost",
     url="https://github.com/ehenry2/xgbatch",
-    packages=setuptools.find_packages(),
+    packages=["xgbatch"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
