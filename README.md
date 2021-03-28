@@ -27,7 +27,7 @@ as well as an efficient method for scoring large batches of data.
 
 ![missing image](https://raw.githubusercontent.com/ehenry2/xgbatch/main/docs/images/XGBatch_Architecture.png)
 
-# Usage
+## Usage
 
 First, install the python package.
 
@@ -75,6 +75,27 @@ from xgbatch import score_pandas
 
 
 ddf = dd.read_csv('data.csv')
-ddf = ddf.map_partitions(lambda df: score_pandas(df))
+ddf = ddf.map_partitions(lambda df: score_pandas(df, "127.0.0.1", "8989"))
 df = ddf.compute()
+```
+
+## Running the integration tests
+There are basic integration tests to ensure the client apis are working for
+all the different client types. The tests use a pretrained model against
+saved data from the iris dataset to ensure we are getting repeatable results.
+
+
+Activate the virtual environment:
+```
+source env/bin/activate
+```
+
+Install the necessary packages:
+```
+pip3 install -r requirements-test.txt
+```
+
+Run the tests:
+```
+pytests integration/
 ```
