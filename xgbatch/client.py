@@ -42,7 +42,7 @@ def score_pandas(df, host, port):
     
     :returns: A pandas DataFrame with the results.
     """
-    table = score_table(df.to_pandas(), host, port)
+    table = score_table(pyarrow.Table.from_pandas(df), host, port)
     return table.to_pandas()
 
 
