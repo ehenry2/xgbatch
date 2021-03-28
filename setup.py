@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="xgbatch",
-    version="0.0.1",
+    version="0.0.2",
     author="Eric Henry",
     description="High Performance Serving for XGBoost",
     url="https://github.com/ehenry2/xgbatch",
