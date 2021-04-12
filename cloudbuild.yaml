@@ -1,0 +1,5 @@
+steps:
+- name: 'python:3.9'
+  entrypoint:  /bin/bash
+  args: ['./integration.sh']
+  timeout: 500s
