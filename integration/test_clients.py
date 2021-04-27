@@ -65,6 +65,32 @@ def test_pandas(expected_predictions):
     assert np.array_equal(scores, expected_predictions)
 
 
+def test_pandas_csv(expected_preds_df):
+    # Read in a csv of input data for predictions. This was created by the train_model.py file.
+    pwd = os.path.realpath(os.path.dirname(__file__))
+    df = pd.read_csv(os.path.join(pwd, 'data', 'xtest.csv'), index_col=0)
+
+    # Drop the index column, as this is not needed by xgboost. If we don't do this,
+    # xgbatch isn't smart enough right now to know to ignore the index column
+    # when creating a DMatrix.
+    df = df.reset_index(drop=True)
+
+    # Run the predicictions.
+    scores = score_pandas(df, "127.0.0.1", "8989")
+
+    # Validate the results.
+    # We are renaming the columns here to match the names in the csv file. The columns names
+    # Sent back by xgbatch are just c0 -> cN .
+    scores = scores.rename({
+        "c0": "class0",
+        "c1": "class1",
+        "c2": "class2"
+    }, axis=1)
+
+    # Verify the predictions are as expected.
+    pd.testing.assert_frame_equal(scores, expected_preds_df)
+
+
 def test_arrow(expected_predictions):
     pwd = os.path.realpath(os.path.dirname(__file__))
     table = pq.read_table(os.path.join(pwd, 'data', 'xtest.parquet'))
@@ -76,3 +102,14 @@ def test_arrow(expected_predictions):
 def expected_predictions():
     pwd = os.path.realpath(os.path.dirname(__file__))
     return np.load(os.path.join(pwd, 'data', 'scores.npy'))
+
+
+@pytest.fixture
+def expected_preds_df():
+    pwd = os.path.realpath(os.path.dirname(__file__))
+    df = pd.read_csv(os.path.join(pwd, 'data', 'scores.csv'), index_col=0)
+    df = df.reset_index(drop=True)
+    # The csv will guess the type wrong, so cast to float32.
+    for col in df.columns:
+        df[col] = df[col].astype("float32")
+    return df
