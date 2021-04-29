@@ -1,4 +1,3 @@
-import logging
 import threading
 
 from .common import gen_names
@@ -10,12 +9,6 @@ import numpy as np
 import pyarrow
 from pyarrow.flight import FlightServerBase
 import xgboost as xgb
-
-
-logger = logging.getLogger("xgbatch")
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-logger.addHandler(ch)
 
 
 class ModelServer(FlightServerBase):
