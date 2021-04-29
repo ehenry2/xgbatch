@@ -17,6 +17,8 @@ setuptools.setup(
         "pyarrow>=3.0.0",
         "xgboost>=1.0.0",
         "numpy>=1.0.0",
+        "ujson",
+        "opentracing"
     ],
     python_requires=">=3.6",
 )

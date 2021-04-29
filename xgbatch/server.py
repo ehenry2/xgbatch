@@ -1,10 +1,21 @@
+import logging
 import threading
+
+from .common import gen_names
+from .middleware import RequestLoggingMiddlewareFactory
+from .middleware import TracingMiddlewareFactory
+
+import ujson
 import numpy as np
 import pyarrow
 from pyarrow.flight import FlightServerBase
 import xgboost as xgb
 
-from .common import gen_names
+
+logger = logging.getLogger("xgbatch")
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+logger.addHandler(ch)
 
 
 class ModelServer(FlightServerBase):
@@ -12,17 +23,26 @@ class ModelServer(FlightServerBase):
     Simple implementation of base flight server for 
     xgboost based model.
     """
-    def __init__(self, host, port, model):
+    def __init__(self, host, port, model,
+                 logger, tracer, model_name):
         """
         Constructor.
 
         :param host: Host to serve on.
         :param port: Port to serve on.
         :param model: XGBoost booster object.
+        :param logger: Logger object to write server logs to.
+        :param tracer: Opentracing compatible tracer.
+        :param model_name: Name of the model for tracing.
         """
         # Initialize the base class.
+        middleware = {}
+        if logger is not None:
+            middleware['logger'] = RequestLoggingMiddlewareFactory(logger, ujson)
+        if tracer is not None:
+            middleware['tracer'] = TracingMiddlewareFactory(tracer, model_name)
         location = f"grpc://{host}:{port}"
-        super().__init__(location=location)
+        super().__init__(location=location, middleware=middleware)
         self.lock = threading.Lock()
         self.model = model
 
@@ -77,11 +97,14 @@ def _load_model(model_obj_uri, storage_options):
         raise ValueError("Unsupported file system for model object uri")
         
 
-def serve_xgb_batch(host, port, model_obj_uri, storage_options=None):
+def serve_xgb_batch(host, port, model_obj_uri,
+                    logger=None,
+                    storage_options=None, tracer=None,
+                    model_name="xgbatch_model"):
     """
     Serve an xgboost model to accept batch inputs via arrow flight.
-    This function will load the model artifact and initialize
-
+    This function will load the model artifact and initialize a flight server
+    to score against the xgboost model.
 
     :param host: IP or hostname to serve on. If you want to serve on all
                  interfaces, set it to '0.0.0.0' or if only locally on the
@@ -94,9 +117,17 @@ def serve_xgb_batch(host, port, model_obj_uri, storage_options=None):
                           with pickle.
     :param storage_options: Dict of storage backend specific configuration. Corresponds 
                             to the storage_options parameter for s3fs and gcsfs.
+    :param logger: A python Logger object compatible with the 'logging' standard library.
+                   If logger is not None, a middleware component adding request logging in json format
+                   will be enabled on the server.
+    :param tracer: An OpenTracing compatible tracer (such as Jaeger). If tracer is not None,
+                   a middleware component will be added to enable tracing on the server.
+    :param model_name: Name of the model (used in the tracing to specify the operation name).
+                       If no tracer is provided, this value is ignored.
     """
     # Load the model object.
     model = _load_model(model_obj_uri, storage_options)
     # Run the service.
-    server = ModelServer(host, port, model)
+    server = ModelServer(host, port, model,
+                         logger, tracer, model_name)
     server.serve()

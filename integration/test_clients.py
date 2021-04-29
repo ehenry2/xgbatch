@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 import threading
@@ -8,18 +9,43 @@ from xgbatch import score_table
 from .train_model import load_array
 
 import dask.dataframe as dd
+from jaeger_client import Config
 import pyarrow.parquet as pq
 import pytest
 import numpy as np
 import pandas as pd
 
 
-def _run_server(model_uri):
-    serve_xgb_batch("127.0.0.1", "8989", model_uri)
+def _run_server(model_uri, logger, tracer):
+    serve_xgb_batch("127.0.0.1", "8989", model_uri,
+                    logger=logger, tracer=tracer,
+                    model_name="xgbatch_model_1")
+
+
+def get_tracer():
+    config = Config(
+        config={
+            'sampler': {
+                'type': 'const',
+                'param': 1
+            },
+            'logging': True
+        },
+        service_name='HelloWorld',
+        validate=True
+    )
+    return config.initialize_tracer()
 
 
 def serve_background(model_uri):
-    th = threading.Thread(group=None, target=_run_server, args=(model_uri,))
+    # Create the logger and tracer to test logging middleware.
+    logger = logging.getLogger("xgbatch")
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    logger.addHandler(ch)
+    tracer = get_tracer()
+    # stuff.
+    th = threading.Thread(group=None, target=_run_server, args=(model_uri, logger, tracer,))
     th.daemon = True
     th.start()
     time.sleep(1)
