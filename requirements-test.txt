@@ -1,3 +1,4 @@
 pytest
 dask[dataframe]
 scikit-learn
+jaeger-client
